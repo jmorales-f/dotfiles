@@ -12,15 +12,6 @@ advanced_mouse_actions false
 host_notification_protocol "off"
 
 keybinds {
-    normal {
-        unbind "Ctrl h"
-        unbind "Ctrl l"
-        unbind "Ctrl j"
-        unbind "Ctrl k"
-        bind "Ctrl f" { EditScrollback; }
-        bind "Ctrl m" { SwitchToMode "move"; }
-        bind "Ctrl x" { Detach; }
-    }
     shared_except "locked" {
         bind "Ctrl w" {
             LaunchOrFocusPlugin "file:~/.config/zellij/plugins/room.wasm" {
