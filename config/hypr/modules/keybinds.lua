@@ -1,46 +1,84 @@
 -- Keybindings
 -- See https://wiki.hypr.land/Configuring/Basics/Binds/
+-- CENTRAL KEYBIND CONFIG: to remap any bind, just change the variable value
+-- below. The hl.bind lines underneath use only these variables.
 
 local settings = require("modules/settings")
 
-local mainMod    = settings.mainMod
-local shift      = settings.shift
-local control    = settings.control
-local left       = settings.left
-local right      = settings.right
-local up         = settings.up
-local down       = settings.down
-local w1         = settings.w1
-local w2         = settings.w2
-local w3         = settings.w3
-local w4         = settings.w4
-local w5         = settings.w5
+-- === Modifiers (edit to remap) ===
+local mainMod = "SUPER"
+local shift   = "SHIFT"
+local control = "CTRL"
 
-hl.bind(mainMod .. " + T", hl.dsp.exec_cmd(settings.terminal))
-hl.bind(mainMod .. " + F", hl.dsp.exec_cmd(settings.browser))
-hl.bind(mainMod .. " + Q", hl.dsp.window.kill())
-hl.bind(mainMod .. " + E", hl.dsp.exec_cmd(settings.fileManager))
-hl.bind(control .. " + space", hl.dsp.exec_cmd("rofi -show menu -modes \"menu:$HOME/.config/menu/main\""))
-hl.bind(mainMod .. " + " .. shift .. " + E", hl.dsp.exit())
-hl.bind(mainMod .. " + " .. shift .. " + R", hl.dsp.exec_cmd("~/.config/scripts/reload"))
-hl.bind(mainMod .. " + M", hl.dsp.window.fullscreen())
+-- === Movement keys (edit to remap) ===
+local left  = "h"
+local right = "l"
+local up    = "k"
+local down  = "j"
+
+-- === Workspace keys (edit to remap) ===
+local w1 = "f1"
+local w2 = "f2"
+local w3 = "f3"
+local w4 = "f4"
+local w5 = "f5"
+
+-- === Action / app keys (edit to remap) ===
+local k_terminal   = "T"
+local k_browser    = "F"
+local k_kill       = "Q"
+local k_file       = "E"
+local k_launcher   = "space"
+local k_exit       = "E"
+local k_reload     = "R"
+local k_fullscreen = "M"
+local k_shot       = "Print"
+local k_wall       = "W"
+local k_oc         = "O"
+local k_docker     = "D"
+local k_btop       = "P"
+
+-- === Mouse buttons (edit to remap) ===
+local m_drag   = "mouse:272"
+local m_resize = "mouse:273"
+
+-- === Media / hardware keys (edit to remap) ===
+local vol_up    = "XF86AudioRaiseVolume"
+local vol_down  = "XF86AudioLowerVolume"
+local mute      = "XF86AudioMute"
+local mic_mute  = "XF86AudioMicMute"
+local bright_up = "XF86MonBrightnessUp"
+local bright_dn = "XF86MonBrightnessDown"
+local m_next    = "XF86AudioNext"
+local m_pause   = "XF86AudioPause"
+local m_play    = "XF86AudioPlay"
+local m_prev    = "XF86AudioPrev"
+
+hl.bind(mainMod .. " + " .. k_terminal, hl.dsp.exec_cmd(settings.terminal))
+hl.bind(mainMod .. " + " .. k_browser, hl.dsp.exec_cmd(settings.browser))
+hl.bind(mainMod .. " + " .. k_kill, hl.dsp.window.kill())
+hl.bind(mainMod .. " + " .. k_file, hl.dsp.exec_cmd(settings.fileManager))
+hl.bind(control .. " + " .. k_launcher, hl.dsp.exec_cmd("rofi -show menu -modes \"menu:$HOME/.config/menu/main\""))
+hl.bind(mainMod .. " + " .. shift .. " + " .. k_exit, hl.dsp.exit())
+hl.bind(mainMod .. " + " .. shift .. " + " .. k_reload, hl.dsp.exec_cmd("~/.config/scripts/reload"))
+hl.bind(mainMod .. " + " .. k_fullscreen, hl.dsp.window.fullscreen())
 
 -- Screenshots: region (Print), full screen (SUPER+Print), active window (SHIFT+Print)
-hl.bind("Print", hl.dsp.exec_cmd("~/.config/scripts/screenshot"))
-hl.bind(mainMod .. " + Print", hl.dsp.exec_cmd("~/.config/scripts/screenshot full"))
-hl.bind(shift .. " + Print", hl.dsp.exec_cmd("~/.config/scripts/screenshot window"))
+hl.bind(k_shot, hl.dsp.exec_cmd("~/.config/scripts/screenshot"))
+hl.bind(mainMod .. " + " .. k_shot, hl.dsp.exec_cmd("~/.config/scripts/screenshot full"))
+hl.bind(shift .. " + " .. k_shot, hl.dsp.exec_cmd("~/.config/scripts/screenshot window"))
 
 -- Wallpaper picker in a scratchpad
-hl.bind(mainMod .. " + " .. shift .. " + W", hl.dsp.exec_cmd("~/.config/scripts/scratch wall \"kitty -e ~/.config/scripts/wallpaper_picker\""))
+hl.bind(mainMod .. " + " .. shift .. " + " .. k_wall, hl.dsp.exec_cmd("~/.config/scripts/scratch wall \"kitty -e ~/.config/scripts/wallpaper_picker\""))
 
 -- opencode in a scratchpad
-hl.bind(mainMod .. " + O", hl.dsp.exec_cmd("~/.config/scripts/scratch oc \"kitty -e opencode\""))
+hl.bind(mainMod .. " + " .. k_oc, hl.dsp.exec_cmd("~/.config/scripts/scratch oc \"kitty -e opencode\""))
 
 -- lazydocker in a scratchpad
-  hl.bind(mainMod .. " + D", hl.dsp.exec_cmd("~/.config/scripts/scratch ld \"kitty -e lazydocker\""))
+hl.bind(mainMod .. " + " .. k_docker, hl.dsp.exec_cmd("~/.config/scripts/scratch ld \"kitty -e lazydocker\""))
 
 -- btop in a scratchpad
-hl.bind(mainMod .. " + P", hl.dsp.exec_cmd("~/.config/scripts/scratch btop \"kitty -e btop\""))
+hl.bind(mainMod .. " + " .. k_btop, hl.dsp.exec_cmd("~/.config/scripts/scratch btop \"kitty -e btop\""))
 
 -- Move focus with mainMod + hjkl
 hl.bind(mainMod .. " + " .. left, hl.dsp.focus({ direction = "left" }))
@@ -73,19 +111,19 @@ hl.bind(mainMod .. " + " .. control .. " + " .. w5, hl.dsp.window.move({ workspa
 -- hl.bind(mainMod .. " + " .. shift .. " + S", hl.dsp.window.move({ workspace = "special:magic" }))
 
 -- Move/resize windows with mainMod + LMB/RMB and dragging
-hl.bind(mainMod .. " + mouse:272", hl.dsp.window.drag(), { mouse = true })
-hl.bind(mainMod .. " + mouse:273", hl.dsp.window.resize(), { mouse = true })
+hl.bind(mainMod .. " + " .. m_drag, hl.dsp.window.drag(), { mouse = true })
+hl.bind(mainMod .. " + " .. m_resize, hl.dsp.window.resize(), { mouse = true })
 
 -- Laptop multimedia keys for volume and LCD brightness
-hl.bind("XF86AudioRaiseVolume", hl.dsp.exec_cmd("wpctl set-volume -l 1 @DEFAULT_AUDIO_SINK@ 5%+"), { locked = true, repeating = true })
-hl.bind("XF86AudioLowerVolume", hl.dsp.exec_cmd("wpctl set-volume @DEFAULT_AUDIO_SINK@ 5%-"), { locked = true, repeating = true })
-hl.bind("XF86AudioMute", hl.dsp.exec_cmd("wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle"), { locked = true, repeating = true })
-hl.bind("XF86AudioMicMute", hl.dsp.exec_cmd("wpctl set-mute @DEFAULT_AUDIO_SOURCE@ toggle"), { locked = true, repeating = true })
-hl.bind("XF86MonBrightnessUp", hl.dsp.exec_cmd("brightnessctl s 10%+"), { locked = true, repeating = true })
-hl.bind("XF86MonBrightnessDown", hl.dsp.exec_cmd("brightnessctl s 10%-"), { locked = true, repeating = true })
+hl.bind(vol_up, hl.dsp.exec_cmd("wpctl set-volume -l 1 @DEFAULT_AUDIO_SINK@ 5%+"), { locked = true, repeating = true })
+hl.bind(vol_down, hl.dsp.exec_cmd("wpctl set-volume @DEFAULT_AUDIO_SINK@ 5%-"), { locked = true, repeating = true })
+hl.bind(mute, hl.dsp.exec_cmd("wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle"), { locked = true, repeating = true })
+hl.bind(mic_mute, hl.dsp.exec_cmd("wpctl set-mute @DEFAULT_AUDIO_SOURCE@ toggle"), { locked = true, repeating = true })
+hl.bind(bright_up, hl.dsp.exec_cmd("brightnessctl s 10%+"), { locked = true, repeating = true })
+hl.bind(bright_dn, hl.dsp.exec_cmd("brightnessctl s 10%-"), { locked = true, repeating = true })
 
 -- Requires playerctl
-hl.bind("XF86AudioNext", hl.dsp.exec_cmd("playerctl next"), { locked = true })
-hl.bind("XF86AudioPause", hl.dsp.exec_cmd("playerctl play-pause"), { locked = true })
-hl.bind("XF86AudioPlay", hl.dsp.exec_cmd("playerctl play-pause"), { locked = true })
-hl.bind("XF86AudioPrev", hl.dsp.exec_cmd("playerctl previous"), { locked = true })
+hl.bind(m_next, hl.dsp.exec_cmd("playerctl next"), { locked = true })
+hl.bind(m_pause, hl.dsp.exec_cmd("playerctl play-pause"), { locked = true })
+hl.bind(m_play, hl.dsp.exec_cmd("playerctl play-pause"), { locked = true })
+hl.bind(m_prev, hl.dsp.exec_cmd("playerctl previous"), { locked = true })
