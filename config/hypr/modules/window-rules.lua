@@ -43,21 +43,6 @@ hl.window_rule({
     match = { class = "^(discord)$" },
     workspace = "4",
 })
-hl.window_rule({
-    name = "whatsapp-workspace",
-    match = { initial_title = "^(WhatsApp.*)$" },
-    workspace = "4",
-})
-hl.window_rule({
-    name = "youtube-music-workspace",
-    match = { initial_title = "^(YouTube Music)$" },
-    workspace = "5",
-})
-hl.window_rule({
-    name = "youtube-workspace",
-    match = { initial_title = "^(YouTube.*)$" },
-    workspace = "5",
-})
 
 -- DBeaver loading screen fix
 hl.window_rule({
