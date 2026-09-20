@@ -134,7 +134,7 @@ Single rule: edit the repo file, the `~/.config` symlink picks it up, then run
 
 | Want to change | Edit this file |
 | --- | --- |
-| Hyprland keybinds (all of them) | `config/hypr/modules/keybinds.lua` — variables at top, lines 8–55 |
+| Hyprland keybinds (all of them) | `config/hypr/modules/keybinds.lua` — full `b_*` sequences at top |
 | Default apps (terminal, browser, file manager) | `config/hypr/modules/settings.lua` |
 | Monitors, scale, workspace→monitor | `config/hypr/modules/monitors.lua` |
 | Gaps, borders, blur, animations | `config/hypr/modules/appearance.lua` |
@@ -164,28 +164,29 @@ Single rule: edit the repo file, the `~/.config` symlink picks it up, then run
 
 All binds live in one place: `config/hypr/modules/keybinds.lua`.
 
-* Lines 8–55 are plain variables. Changing a variable remaps every bind that uses it.
+* Each `b_*` variable at the top holds the **whole sequence** used to trigger the
+  action (modifiers included). Changing the variable remaps the bind.
   Do not edit the `hl.bind(...)` lines unless you are adding/removing an action.
 * Programs (`kitty`, `brave`, `dolphin`) come from `config/hypr/modules/settings.lua`.
 
 ```lua
--- === Modifiers (edit to remap) ===
-local mainMod = "SUPER"   -- change to "ALT" for example
-local shift   = "SHIFT"
-local control = "CTRL"
+-- === Modifiers ===
+local mainMod = "SUPER"   -- change to "ALT" and every SUPER-based bind follows
 
--- === Action / app keys (edit to remap) ===
-local k_terminal = "T"    -- SUPER+T opens terminal
-local k_browser  = "F"    -- SUPER+F opens browser
+-- === Full bind sequences (edit to remap) ===
+local b_terminal   = mainMod .. " + T"                 -- SUPER + T
+local b_browser    = mainMod .. " + F"                 -- SUPER + F
+local b_focus_left = mainMod .. " + h"                 -- SUPER + h
+local b_ws1        = "f1"                              -- f1
 -- ...
 ```
 
 Example remaps:
 
 ```lua
-local k_terminal = "Return"  -- SUPER+Return instead of SUPER+T
-local left  = "Left"         -- use arrow keys instead of hjkl
-local w1    = "1"            -- workspace 1 on "1" instead of "F1"
+local b_terminal = mainMod .. " + Return"  -- SUPER+Return instead of SUPER+T
+local b_focus_left = mainMod .. " + Left"  -- arrows instead of hjkl
+local b_ws1 = "1"                          -- workspace 1 on "1" instead of "F1"
 ```
 
 Default binds (with stock variables):
