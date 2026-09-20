@@ -48,11 +48,6 @@
 
 	# --- Installation Modules ---
 
-	setup_system_basics() {
-	    log "Setting up basic system directories and configurations..."
-	    log "Setting up git config..."
-	}
-
 	install_core_packages() {
 	    log "Updating system and installing core packages via pacman..."
 	    run_cmd sudo pacman -Syu --noconfirm
@@ -300,7 +295,6 @@ setup_dotfiles() {
 main() {
     log "Starting dotfiles and system setup script..."
 
-    setup_system_basics
     install_core_packages
     setup_docker
     enable_system_services
