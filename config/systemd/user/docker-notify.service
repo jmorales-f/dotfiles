@@ -1,0 +1,9 @@
+[Unit]
+Description=Docker Container Start Notifier
+
+[Service]
+ExecStart=%h/.config/systemd/scripts/docker_notify.sh
+Restart=always
+
+[Install]
+WantedBy=default.target

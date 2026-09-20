@@ -1,0 +1,7 @@
+{
+	"custom/user": {
+		"format": "󰌽",
+		"on-click": "rofi -show menu -modes \"menu:$HOME/.config/menu/main\"",
+		"tooltip-format": "System Menu"
+	}
+}

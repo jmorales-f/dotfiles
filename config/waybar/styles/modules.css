@@ -1,0 +1,75 @@
+/* Left modules */
+
+#custom-user {
+	padding: 0 12px;
+}
+
+#workspaces {
+	background-color: @bg-alt;
+}
+
+#mpris {
+	padding: 0 12px;
+	font-weight: normal;
+}
+
+#temperature {
+	background-color: @bg-alt;
+    padding-right: 3px;
+}
+
+#power-profiles-daemon {
+	background-color: @bg-alt;
+  padding: 0 10px;
+}
+
+#memory {
+	background-color: @bg-alt;
+}
+
+#cpu {
+    padding-left: 1px;
+	background-color: @bg-alt;
+}
+
+/* Right modules */
+
+#tray {
+  margin-right: 10px;
+}
+
+#bluetooth {
+  padding: 0 6px;
+	background-color: @bg-alt;
+}
+
+#pulseaudio {
+	background-color: @bg-alt;
+	padding: 0 4px 0 6px;
+}
+
+#network {
+	padding: 0 7px 0 6px;
+	background-color: @bg-alt;
+}
+
+#battery {
+	background-color: @bg-alt;
+    padding: 0 15px 0 6px;
+}
+
+#clock.date {
+	background-color: @bg-alt;
+}
+
+#clock.time {
+    padding: 0 8px;
+	background-color: @accent;
+    color: @bg;
+}
+
+#custom-power {
+	border-radius: 16px;
+	padding: 0 12px;
+	color: @fg;
+}

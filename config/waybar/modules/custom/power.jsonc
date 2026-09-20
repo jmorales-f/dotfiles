@@ -1,0 +1,7 @@
+{
+	"custom/power": {
+		"format": "󰐥",
+		"on-click": "rofi -show menu -modes \"menu:$HOME/.config/menu/main power\"",
+		"tooltip-format": "Power Menu"
+	}
+}

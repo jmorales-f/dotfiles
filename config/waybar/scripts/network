@@ -1,0 +1,34 @@
+#!/usr/bin/env bash
+#
+# Toggle Wi-Fi ON/OFF
+#
+# Dependencies:
+#   - networkmanager (nmcli)
+#   - libnotify (notify-send)
+
+toggle_wifi() {
+	local status
+	status=$(nmcli radio wifi)
+
+	case $status in
+		enabled)
+			nmcli radio wifi off
+			notify-send -a "System" "󰤮 Wi-Fi Off" -u low
+			;;
+		disabled)
+			nmcli radio wifi on
+			notify-send -a "System" "󰤨 Wi-Fi On" -u low
+			;;
+	esac
+}
+
+main() {
+	if [[ -z ${1:-} || $1 == toggle ]]; then
+		toggle_wifi
+	else
+		echo "usage: network [toggle]" >&2
+		return 1
+	fi
+}
+
+main "$@"

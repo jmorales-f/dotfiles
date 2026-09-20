@@ -1,0 +1,134 @@
+#!/usr/bin/env bash
+#
+# Set a wallpaper with hyprpaper
+#
+# Dependencies:
+#   - hyprpaper
+#   - fzf
+#   - kitty (icat preview)
+
+source "$HOME/.config/zsh/modules/fzf.zsh"
+
+print_help() {
+	local script=${0##*/}
+
+	cat <<-EOF
+		$script: $script [option]
+		    Set a wallpaper with hyprpaper
+
+		    Options:
+		      list      List available wallpapers
+	EOF
+}
+
+set_wallpaper() {
+	local wallpaper_directory="$HOME/wallpapers"
+	if [[ ! -d "$wallpaper_directory" ]]; then
+		echo "Unable to locate wallpapers directory" >&2
+		return 1
+	fi
+
+	local COLOR_TITLE="\e[1;36m"       # bold cyan
+	local COLOR_WALLPAPER="\e[1;32m"   # bold green
+	local COLOR_ERROR="\e[1;31m"       # bold red
+	local COLOR_RESET="\e[0m"          # reset
+
+	local wallpapers
+	wallpapers=$(find "$wallpaper_directory" -maxdepth 1 -type f \( -name '*.png' -o -name '*.jpg' -o -name '*.jpeg' \) | sort)
+
+	if [[ "$1" == "list" ]]; then
+		echo -e "${COLOR_TITLE}Available wallpapers:${COLOR_RESET}"
+		echo "$wallpapers" | while read -r wallpaper; do
+			echo -e "  ${COLOR_WALLPAPER}${wallpaper##*/}${COLOR_RESET}"
+		done
+		return
+	fi
+
+	local cache_dir="$HOME/.cache/wallpaper-picker"
+	local preview
+	preview=$(cat <<-EOF
+		file='{}'
+		name="\${file##*/}"
+		cache="$cache_dir/\${name%.*}.jpg"
+		mkdir -p "$cache_dir" 2>/dev/null
+		[[ -f "\$cache" && "\$cache" -nt "\$file" ]] || ffmpeg -loglevel error -y -i "\$file" -vf scale=1920:1080:force_original_aspect_ratio=increase,crop=1920:1080 -frames:v 1 "\$cache" 2>/dev/null
+		[[ -f "\$cache" ]] && kitty +kitten icat --transfer-mode=memory --silent --clear --stdin no --scale-up --place \${FZF_PREVIEW_COLUMNS:-60}x\$(( \${FZF_PREVIEW_LINES:-20} - 3 ))@\${FZF_PREVIEW_LEFT:-0}x\${FZF_PREVIEW_TOP:-0} "\$cache"
+		printf '\n\e[38;5;117m  %s\e[0m  \e[38;5;240m%s\e[0m\n' "\$(file -b {} | grep -oE '[0-9]+ ?x ?[0-9]+' | head -1 | tr -d ' ')" "\$(numfmt --to=iec --suffix=B "\$(stat -c %s {})")"
+	EOF
+	)
+
+	local cols lines pct
+	cols=$(tput cols)
+	lines=$(tput lines)
+	pct=$(kitty +kitten icat --print-window-size 2>/dev/null | awk -F'x' -v c="$cols" -v l="$lines" '
+		/^[0-9]+x[0-9]+$/ && $1 > 0 && $2 > 0 {
+			cw = $1 / c
+			ch = $2 / l
+			pw = (l - 4) * ch * 16 / 9
+			p = pw / $1 * 100
+			if (p < 45) p = 45
+			if (p > 80) p = 80
+			printf "%.0f", p
+			exit
+		}
+	')
+	[[ -n "$pct" ]] || pct=55
+
+	local opts=(
+		--border="sharp"
+		--border-label=" Wallpaper Picker "
+		--color="label:#c4a7e7,preview-label:#c4a7e7"
+		--cycle
+		--delimiter="/"
+		--ghost="Search"
+		--header="$(printf '%d wallpapers · ↑/↓ browse · ↵ set' "$(wc -l <<<"$wallpapers")")"
+		--highlight-line
+		--info="inline-right"
+		--layout="reverse-list"
+		--margin="1,2"
+		--preview="$preview"
+		--preview-label=" Preview "
+		--preview-window="right:${pct}%:border-sharp"
+		--prompt="❯ "
+		--scrollbar="▐"
+		--with-nth="-1"
+	)
+
+	local path
+	path=$(echo "$wallpapers" | fzf "${opts[@]}")
+
+	[[ -z "$path" ]] && echo -e "${COLOR_ERROR}No wallpaper selected.${COLOR_RESET}" && return 1
+
+	if [[ ! -f "$path" ]]; then
+		echo -e "${COLOR_ERROR}Wallpaper '$path' not found${COLOR_RESET}"
+		return 1
+	fi
+
+	hyprctl monitors -j | jq -r '.[].name' | sort -u | while read -r monitor; do
+		hyprctl hyprpaper wallpaper "$monitor","$path",cover
+	done
+
+	sed -i "s|^[[:space:]]*path = .*|    path = $path|" "$HOME/.config/hypr/hyprpaper.conf"
+	notify-send -a "Wallpaper" " Wallpaper Changed" \
+		--hint "string:image-path:$path"
+	echo -e "${COLOR_TITLE}Wallpaper set to:${COLOR_WALLPAPER} ${path##*/}${COLOR_RESET}"
+}
+
+main() {
+	local option=$1
+
+	case $option in
+		'')
+			set_wallpaper
+			;;
+		list)
+			set_wallpaper list
+			;;
+		*)
+			print_help >&2
+			return 1
+			;;
+	esac
+}
+
+main "$@"

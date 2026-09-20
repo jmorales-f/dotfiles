@@ -1,0 +1,421 @@
+#!/usr/bin/env bash
+#
+# Single-window system menu (rofi script mode)
+# Run with: rofi -show menu -modes "menu:~/.config/scripts/control"
+#
+# Dependencies:
+#   - rofi-wayland
+#   - bluez-utils (bluetoothctl)
+#   - networkmanager (nmcli)
+#   - libnotify (notify-send)
+
+set -euo pipefail
+
+menu_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
+scripts_dir="$HOME/.config/scripts"
+
+CONTROLLER_MAC="41:42:59:C5:C0:6A"
+
+declare -A iconmap=()
+
+desktop_roots() {
+	printf '%s\n' \
+		"$HOME/.local/share/applications" \
+		"$HOME/.local/share/flatpak/exports/share/applications" \
+		"/var/lib/flatpak/exports/share/applications" \
+		"/usr/share/applications"
+}
+
+collect_desktop_files() {
+	local d f
+	for d in $(desktop_roots); do
+		[[ -d "$d" ]] || continue
+		for f in "$d"/*.desktop; do
+			[[ -f $f ]] && printf '%s\n' "$f"
+		done
+	done
+}
+
+opt() { printf '\0%s\x1f%s\n' "$1" "$2"; }
+
+rows_hub() {
+	local ctrl_connected=false
+
+	if timeout 5 bluetoothctl devices Connected 2>/dev/null | grep -q "$CONTROLLER_MAC"; then
+		ctrl_connected=true
+	fi
+
+	opt prompt "System Menu"
+	opt data "hub"
+	opt use-hot-keys true
+	opt no-custom true
+	printf '󰇘 Apps\0info\x1fhub:apps\n'
+	if [[ $ctrl_connected == true ]]; then
+		printf '󰊵 Disconnect Controller\0info\x1fhub:controller\n'
+	else
+		printf '󰊴 Connect Controller\0info\x1fhub:controller\n'
+	fi
+	printf '󰭹 OpenCode\0info\x1fhub:opencode\n'
+	printf '󰒊 LocalSend\0info\x1fhub:localsend\n'
+	printf '󱎓 Games\0info\x1fhub:esde\n'
+	printf ' btop\0info\x1fhub:btop\n'
+	printf '󰂯 Bluetooth\0info\x1fhub:bt\n'
+	printf '󰤨 Wi-Fi\0info\x1fhub:wifi\n'
+	printf '󰐥 Power\0info\x1fhub:power\n'
+	printf ' Wallpaper\0info\x1fhub:wallpaper\n'
+}
+
+rows_power() {
+	opt prompt "Power"
+	opt data "menu:power"
+	opt use-hot-keys true
+	opt no-custom true
+	printf '󰍃 Logout\0info\x1fpw:logout\n'
+	printf '󰑓 Reboot\0info\x1fpw:reboot\n'
+	printf '󰐥 Shutdown\0info\x1fpw:shutdown\n'
+}
+
+rows_apps() {
+	local name icon n p
+	local -a names=() icons=()
+	local -a desktop_files=()
+
+	mapfile -t desktop_files < <(collect_desktop_files)
+
+	while IFS=$'\t' read -r n p; do
+		iconmap["${n%.*}"]="$p"
+	done < <(find /usr/share/icons/hicolor /usr/share/pixmaps -type f \( -name '*.png' -o -name '*.svg' \) 2>/dev/null -printf '%f\t%p\n')
+
+	while IFS=$'\t' read -r name icon; do
+		[[ -n $name ]] || continue
+		[[ $icon != /* && -n $icon ]] && icon=${iconmap["$icon"]:-}
+		names+=("$name")
+		icons+=("$icon")
+	done < <(awk '
+			FNR == 1 { if (name != "") printf "%s\t%s\n", name, icon; name = ""; icon = "" }
+			/^Name=/ { name = substr($0, 6) }
+			/^Icon=/ { icon = substr($0, 6) }
+			END { if (name != "") printf "%s\t%s\n", name, icon }
+		' "${desktop_files[@]}" 2>/dev/null | sort -t$'\t' -u)
+
+	opt prompt "Apps"
+	opt data "menu:apps"
+	opt use-hot-keys true
+	opt no-custom true
+	for i in "${!names[@]}"; do
+		if [[ -n ${icons[$i]} ]]; then
+			printf '%s\0icon\x1f%s\x1finfo\x1fapp:%s\n' "${names[$i]}" "${icons[$i]}" "${names[$i]}"
+		else
+			printf '%s\0info\x1fapp:%s\n' "${names[$i]}" "${names[$i]}"
+		fi
+	done
+}
+
+act_app() {
+	local file exec_line
+	file=$(awk -v id="$1" '
+			/^Name=/ { name = substr($0, 6); if (name == id) { print FILENAME; exit } }
+		' $(collect_desktop_files) 2>/dev/null)
+
+	[[ -n $file ]] || return
+
+	exec_line=$(sed -n 's/^Exec=//p' "$file")
+	exec_line=${exec_line//%[fFuUdDnNickvm]/}
+	[[ -n $exec_line ]] && setsid bash -c "$exec_line" >/dev/null 2>&1 < /dev/null &
+}
+
+rows_bluetooth() {
+	local line mac name conn paired row
+	local -a rows=() active=()
+	local scanning=false idx=0
+
+	pgrep -x bluetoothctl >/dev/null && scanning=true
+
+	if [[ $scanning == true ]]; then
+		mapfile -t rows < /tmp/bt_devices_cache 2>/dev/null || true
+	else
+		while read -r _ mac name; do
+			[[ -n $mac ]] || continue
+			local info
+			info=$(timeout 5 bluetoothctl info "$mac" 2>/dev/null)
+			conn=$(awk '/Connected/ {print $2}' <<<"$info")
+			paired=$(awk '/Paired/ {print $2}' <<<"$info")
+			rows+=("$paired|$conn|${name:-$mac}|$mac")
+		done < <(timeout 5 bluetoothctl devices)
+	fi
+
+	# paired first (yes > no), then connected on top within each group
+	mapfile -t rows < <(printf '%s\n' "${rows[@]}" | sort -r)
+
+	opt prompt "Bluetooth Devices"
+	opt data "menu:bt"
+	opt use-hot-keys true
+	opt no-custom true
+	printf '󰐷 Rescan\0info\x1fbt:rescan\n'
+	printf ' Toggle Bluetooth\0info\x1fbt:toggle\n'
+
+	idx=2
+	for line in "${rows[@]}"; do
+		IFS='|' read -r paired conn name mac <<<"$line"
+		[[ -n $mac ]] || continue
+		[[ $conn == yes ]] && active+=("$idx")
+		row="󰂯 ${name:-$mac}"
+		if [[ $conn == yes ]]; then
+			row="$row (Connected)"
+		elif [[ $paired == yes ]]; then
+			row="$row (Paired)"
+		fi
+		printf '%s\0info\x1fbt:%s\n' "$row" "$mac"
+		idx=$((idx + 1))
+	done
+
+	[[ ${#active[@]} -gt 0 ]] && opt active "$(IFS=,; echo "${active[*]}")"
+}
+
+rows_wifi() {
+	local line use rest ssid
+	local conn=""
+	local -a ssids=() active=()
+
+	while read -r line; do
+		use=${line%%:*}          # '*' or '' (in-use)
+		ssid=${line#*:}
+		ssid=${ssid//\\:/:}
+		[[ -n $ssid ]] || continue
+		[[ $use == '*' ]] && conn=$ssid
+		ssids+=("$ssid")
+	done < <({ nmcli -t -f IN-USE,SSID device wifi list --rescan no 2>/dev/null || true; } | sort -u)
+
+	opt prompt "Wi-Fi Networks"
+	opt data "menu:wifi"
+	opt use-hot-keys true
+	opt no-custom true
+	printf '󰐷 Rescan\0info\x1fwifi:rescan\n'
+	printf ' Toggle Wi-Fi\0info\x1fwifi:toggle\n'
+
+	local idx=2
+	if [[ -n $conn ]]; then
+		printf '󰤨 %s (Connected)\0info\x1fwifi:%s\n' "$conn" "$conn"
+		active+=("$idx")
+		idx=$((idx + 1))
+	fi
+	for ssid in "${ssids[@]}"; do
+		[[ $ssid == "$conn" ]] && continue
+		printf '󰤨 %s\0info\x1fwifi:%s\n' "$ssid" "$ssid"
+		idx=$((idx + 1))
+	done
+	[[ ${#active[@]} -gt 0 ]] && opt active "$(IFS=,; echo "${active[*]}")"
+}
+
+act_bluetooth() {
+	local mac=$1 state connected paired
+	state=$(timeout 5 bluetoothctl show 2>/dev/null | awk '/PowerState/ {print $2}')
+
+	case $state in
+		off)          timeout 5 bluetoothctl power on >/dev/null 2>&1 || true ;;
+		off-blocked)  rfkill unblock bluetooth 2>/dev/null || true ;;
+	esac
+
+	connected=$(timeout 5 bluetoothctl info "$mac" 2>/dev/null | awk '/Connected/ {print $2}')
+
+	if [[ $connected == yes ]]; then
+		if timeout 5 bluetoothctl disconnect "$mac" >/dev/null 2>&1; then
+			notify-send -a "System" "󰂲 Bluetooth" "Disconnected" -u low
+		else
+			notify-send -a "System" "󰅙 Bluetooth" "Failed to disconnect" -u critical
+		fi
+		return
+	fi
+
+	notify-send -a "System" "󰂯 Bluetooth" "Connecting to $mac..." -u low
+
+	paired=$(timeout 5 bluetoothctl info "$mac" 2>/dev/null | awk '/Paired/ {print $2}')
+	[[ $paired == yes ]] || timeout 10 bluetoothctl pair "$mac" >/dev/null 2>&1 || true
+
+	if timeout 10 bluetoothctl connect "$mac" >/dev/null 2>&1; then
+		notify-send -a "System" "󰄲 Bluetooth" "Successfully connected" -u low
+	else
+		notify-send -a "System" "󰅙 Bluetooth" "Failed to connect" -u critical
+	fi
+}
+
+act_wifi() {
+	local arg=$1 state ssid pw
+	state=$(nmcli radio wifi)
+
+	if [[ $arg == toggle ]]; then
+		if [[ $state == enabled ]]; then
+			nmcli radio wifi off
+			notify-send -a "System" "󰤮 Wi-Fi Off" -u low
+		else
+			nmcli radio wifi on
+			notify-send -a "System" "󰤨 Wi-Fi On" -u low
+		fi
+		return
+	fi
+
+	ssid=$arg
+	if nmcli device wifi connect "$ssid" >/dev/null 2>&1; then
+		notify-send -a "System" "󰄲 Wi-Fi" "Connected to $ssid" -u low
+		return
+	fi
+
+	# Password needed: close the outer rofi (pidfile lock blocks a nested
+	# instance) and prompt in a fresh rofi with masked input.
+	pkill -x rofi 2>/dev/null || true
+	pw=$(rofi -dmenu -password -p "Password for $ssid" -theme "$HOME/.config/rofi/theme.rasi" 2>/dev/null || true)
+
+	if [[ -n $pw ]]; then
+		rofi -show menu -modes "menu:$HOME/.config/scripts/control wifi" >/dev/null 2>&1 &
+		notify-send -a "System" "󰤨 Wi-Fi" "Connecting to $ssid..." -u low
+
+		if nmcli device wifi connect "$ssid" password "$pw" >/dev/null 2>&1; then
+			notify-send -a "System" "󰄲 Wi-Fi" "Connected to $ssid" -u low
+		else
+			notify-send -a "System" "󰅙 Wi-Fi" "Failed to connect to $ssid" -u critical
+		fi
+	fi
+}
+
+act_power() {
+	case $1 in
+		logout)    loginctl terminate-session "$XDG_SESSION_ID" ;;
+		reboot)    systemctl reboot ;;
+		shutdown)  systemctl poweroff ;;
+	esac
+}
+
+rescan_bt() {
+	notify-send -a "System" "󰂯 Bluetooth" "Scanning for devices..." -u low
+	if ! pgrep -x bluetoothctl >/dev/null; then
+		: > /tmp/bt_devices_cache
+		while read -r _ mac name; do
+			[[ -n $mac ]] || continue
+			local info conn paired
+			info=$(timeout 3 bluetoothctl info "$mac" 2>/dev/null)
+			conn=$(awk '/Connected/ {print $2}' <<<"$info")
+			paired=$(awk '/Paired/ {print $2}' <<<"$info")
+			printf '%s|%s|%s|%s\n' "$paired" "$conn" "${name:-$mac}" "$mac" >> /tmp/bt_devices_cache
+		done < <(timeout 5 bluetoothctl devices)
+		setsid bluetoothctl --timeout 15 scan on >/dev/null 2>&1 &
+	fi
+	rows_bluetooth
+}
+
+rescan_wifi() {
+	notify-send -a "System" "󰤨 Wi-Fi" "Scanning for networks..." -u low
+	nmcli device wifi rescan >/dev/null 2>&1 || true
+	rows_wifi
+}
+
+main() {
+	if [[ ${ROFI_RETV:-0} == 0 ]]; then
+		case ${1:-} in
+			apps)   rows_apps ;;
+			bt)     rows_bluetooth ;;
+			wifi)   rows_wifi ;;
+			power)  rows_power ;;
+			*)      rows_hub ;;
+		esac
+		exit 0
+	fi
+
+	if [[ ${ROFI_RETV:-0} -ge 10 ]]; then
+		case ${ROFI_RETV:-0} in
+			10)
+				case ${ROFI_DATA:-} in
+					menu:bt)   rescan_bt ;;
+					menu:wifi) rescan_wifi ;;
+					*) rows_hub ;;
+				esac
+				;;
+			12)
+				case ${ROFI_DATA:-} in
+					menu:bt | menu:wifi | menu:power | menu:apps) rows_hub ;;
+					*)
+						pkill -x rofi 2>/dev/null || true
+						exit 0
+						;;
+				esac
+				;;
+			*)
+				case ${ROFI_DATA:-} in
+					menu:bt | menu:wifi | menu:power) rows_hub ;;
+					*) exit 0 ;;
+				esac
+				;;
+		esac
+		exit 0
+	fi
+
+	local info=${ROFI_INFO:-}
+	case $info in
+		hub:apps)        rows_apps ;;
+		hub:bt)          rows_bluetooth ;;
+		hub:controller)
+			act_bluetooth "$CONTROLLER_MAC"
+			pkill -x rofi 2>/dev/null || true
+			exit 0
+			;;
+		hub:wifi)        rows_wifi ;;
+		hub:power)       rows_power ;;
+		hub:wallpaper)
+			"$scripts_dir/scratch" wall "kitty -e $scripts_dir/wallpaper_picker" >/dev/null 2>&1 &
+			pkill -x rofi 2>/dev/null || true
+			exit 0
+			;;
+		hub:opencode)
+			"$scripts_dir/scratch" oc "kitty -e opencode" >/dev/null 2>&1 &
+			pkill -x rofi 2>/dev/null || true
+			exit 0
+			;;
+		hub:localsend)
+			"$scripts_dir/scratch" ls "localsend" >/dev/null 2>&1 &
+			pkill -x rofi 2>/dev/null || true
+			exit 0
+			;;
+		hub:esde)
+			"$scripts_dir/scratch" esde "es-de" >/dev/null 2>&1 &
+			pkill -x rofi 2>/dev/null || true
+			exit 0
+			;;
+		hub:btop)
+			"$scripts_dir/scratch" btop "kitty -e btop" >/dev/null 2>&1 &
+			pkill -x rofi 2>/dev/null || true
+			exit 0
+			;;
+		bt:rescan)       rescan_bt ;;
+		bt:toggle)
+			local state
+			state=$(timeout 5 bluetoothctl show 2>/dev/null | awk '/PowerState/ {print $2}')
+			if [[ $state == on ]]; then
+				bluetoothctl power off
+				notify-send -a "System" "󰂲 Bluetooth Off" -u low
+			else
+				bluetoothctl power on
+				notify-send -a "System" "󰂯 Bluetooth On" -u low
+			fi
+			rows_bluetooth
+			;;
+		bt:*)
+			local bmac=${info#bt:}
+			act_bluetooth "$bmac"
+			rows_bluetooth
+			;;
+		app:*)
+			act_app "${info#app:}" || true
+			pkill -x rofi 2>/dev/null || true
+			exit 0
+			;;
+		wifi:rescan)     rescan_wifi ;;
+		wifi:*)          act_wifi "${info#wifi:}"; rows_wifi ;;
+		pw:*)
+			act_power "${info#pw:}"
+			pkill -x rofi 2>/dev/null || true
+			exit 0
+			;;
+		'')              exit 0 ;;
+	esac
+}
+
+main "$@"

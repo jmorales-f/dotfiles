@@ -1,0 +1,22 @@
+#!/usr/bin/env bash
+#
+# Toggle a scratchpad (special workspace) for the given command.
+# If the scratchpad already has a window, toggle it open/closed.
+# Otherwise launch the command into the scratchpad.
+# Usage: scratch <name> <command...>
+
+set -euo pipefail
+
+name="${1:?usage: scratch <name> <command...>}"
+shift
+cmd="$*"
+
+# Escape backslashes and double quotes for embedding in a Lua string literal.
+lua_cmd=$(printf '%s' "$cmd" | sed 's/\\/\\\\/g; s/"/\\"/g')
+
+if hyprctl -j clients | jq -e --arg ws "special:$name" \
+    'any(.[]; .workspace.name == $ws)' >/dev/null; then
+    hyprctl dispatch "hl.dsp.workspace.toggle_special(\"$name\")"
+else
+    hyprctl dispatch "hl.dsp.exec_cmd(\"$lua_cmd\", { workspace = \"special:$name\" })"
+fi

@@ -1,0 +1,169 @@
+* {
+    background:     #191724;
+    background-alt: #1f1d2e;
+    overlay:        #26233a;
+    foreground:     #e0def4;
+    muted:          #6e6a86;
+    subtle:         #908caa;
+    selected:       #403d52;
+    highlight:      #524f67;
+    iris:           #c4a7e7;
+    foam:           #9ccfd8;
+    love:           #eb6f92;
+    text-color:     @foreground;
+    border-color:   @background-alt;
+    spacing:        4px;
+}
+
+window {
+    background-color: @background;
+    border: 1px;
+    border-color: @muted;
+    border-radius: 0;
+    width: 620px;
+    location: center;
+    padding: 12px;
+    text-color: @foreground;
+}
+
+mainbox {
+    background-color: transparent;
+    padding: 0;
+    children: [inputbar, listview, message];
+}
+
+inputbar {
+    background-color: @background-alt;
+    border-radius: 0;
+    padding: 10px 14px;
+    margin: 0 0 8px 0;
+    spacing: 12px;
+    children: [prompt, entry, case-indicator];
+}
+
+prompt {
+    background-color: transparent;
+    text-color: @iris;
+    padding: 0;
+}
+
+entry {
+    background-color: transparent;
+    text-color: @foreground;
+    placeholder: "Search";
+    placeholder-color: @muted;
+    padding: 0;
+}
+
+case-indicator {
+    background-color: transparent;
+    text-color: @iris;
+}
+
+listview {
+    background-color: transparent;
+    lines: 8;
+    columns: 1;
+    spacing: @spacing;
+    scrollbar: false;
+}
+
+scrollbar {
+    background-color: @overlay;
+    handle-color: @iris;
+    handle-width: 6px;
+    border: 0;
+    margin: 0 0 0 8px;
+}
+
+element {
+    border-radius: 0;
+    padding: 10px 14px;
+    spacing: 8px;
+}
+
+element normal {
+    background-color: transparent;
+    text-color: @foreground;
+}
+
+element alternate {
+    background-color: transparent;
+}
+
+element selected {
+    background-color: @selected;
+    text-color: @foreground;
+    border-radius: 0;
+}
+
+element normal normal, element selected normal, element alternate normal {
+    text-color: @foreground;
+}
+
+element normal urgent, element selected urgent, element alternate urgent {
+    text-color: @love;
+}
+
+element normal active, element selected active, element alternate active {
+    text-color: @foam;
+}
+
+element-text {
+    background-color: inherit;
+    text-color: inherit;
+    vertical-align: 0.5;
+    horizontal-align: 0.0;
+    highlight: bold #9ccfd8;
+}
+
+element.normal.active element-text,
+element.selected.active element-text,
+element.alternate.active element-text {
+    text-color: #9ccfd8;
+}
+
+element-icon {
+    background-color: inherit;
+    text-color: inherit;
+    size: 24px;
+    padding: 0 12px 0 0;
+}
+
+mode-switcher {
+    background-color: transparent;
+    spacing: @spacing;
+}
+
+button {
+    background-color: transparent;
+    border-radius: 0;
+    padding: 8px 12px;
+    text-color: @muted;
+}
+
+button selected {
+    background-color: @selected;
+    text-color: @foam;
+}
+
+message {
+    background-color: @background-alt;
+    border-radius: 0;
+    padding: 8px 12px;
+    margin: 8px 0 0 0;
+}
+
+message-text {
+    text-color: @subtle;
+}
+
+error-message {
+    background-color: @background;
+    border-radius: 0;
+    padding: 16px;
+}
+
+error-message textbox {
+    text-color: @love;
+}

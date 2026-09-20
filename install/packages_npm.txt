@@ -1,0 +1,4 @@
+pnpm
+bun
+opencode-ai
+tree-sitter-cli

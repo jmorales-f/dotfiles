@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+#
+# Reload Hyprland, Waybar and Dunst
+
+hyprctl reload
+systemctl --user restart waybar.service
+dunstctl reload
+notify-send -a "System" "󰑓 Reloaded" "Hyprland, Waybar and Dunst reloaded" -u low

@@ -1,0 +1,35 @@
+#!/usr/bin/env bash
+#
+# Toggle Bluetooth ON/OFF
+#
+# Dependencies:
+#   - bluez-utils (bluetoothctl)
+#   - libnotify (notify-send)
+
+toggle_bluetooth() {
+	local state
+	state=$(bluetoothctl show | awk '/PowerState/ {print $2}')
+
+	case $state in
+		on)
+			bluetoothctl power off
+			notify-send -a "System" "󰂲 Bluetooth Off" -u low
+			;;
+		*)
+			[[ $state == off-blocked ]] && rfkill unblock bluetooth
+			bluetoothctl power on
+			notify-send -a "System" "󰂯 Bluetooth On" -u low
+			;;
+	esac
+}
+
+main() {
+	if [[ -z ${1:-} || $1 == toggle ]]; then
+		toggle_bluetooth
+	else
+		echo "usage: bluetooth [toggle]" >&2
+		return 1
+	fi
+}
+
+main "$@"

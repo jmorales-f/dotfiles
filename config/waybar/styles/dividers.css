@@ -1,0 +1,19 @@
+#custom-left.accent,
+#custom-right.accent {
+	color: @accent;
+}
+
+#custom-left,
+#custom-right {
+	color: @bg-alt;
+}
+
+#custom-left.inverse,
+#custom-right.inverse {
+	color: @bg-alt;
+}
+
+#custom-left.inverse-accent,
+#custom-right.inverse-accent {
+	color: @accent;
+}

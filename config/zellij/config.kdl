@@ -1,0 +1,33 @@
+theme "rose-pine"
+simplified_ui false
+pane_frames false
+default_layout "compact"
+
+show_startup_tips false
+show_release_notes false
+
+default_shell "zsh"
+copy_on_select true
+advanced_mouse_actions false
+host_notification_protocol "off"
+
+keybinds {
+    normal {
+        unbind "Ctrl h"
+        unbind "Ctrl l"
+        unbind "Ctrl j"
+        unbind "Ctrl k"
+        bind "Ctrl f" { EditScrollback; }
+        bind "Ctrl m" { SwitchToMode "move"; }
+        bind "Ctrl x" { Detach; }
+    }
+    shared_except "locked" {
+        bind "Ctrl w" {
+            LaunchOrFocusPlugin "file:~/.config/zellij/plugins/room.wasm" {
+                floating false
+                ignore_case true
+                quick_jump true
+            }
+        }
+    }
+}

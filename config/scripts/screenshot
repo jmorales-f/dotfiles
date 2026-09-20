@@ -1,0 +1,37 @@
+#!/usr/bin/env bash
+#
+# Take a screenshot and copy it to the clipboard.
+# Usage: screenshot [region|full|window]   (default: region)
+
+mode="${1:-region}"
+dir="$HOME/screenshots"
+file_name="screenshot-$(date +'%Y-%m-%d_%H-%M-%S').png"
+file_path="$dir/$file_name"
+
+mkdir -p "$dir"
+
+case "$mode" in
+    region)
+        geometry="$(slurp)" || { echo "screenshot cancelled"; exit 1; }
+        grim -g "$geometry" "$file_path"
+        ;;
+    full)
+        grim "$file_path"
+        ;;
+    window)
+        grim -g "$(hyprctl -j activewindow | jq -r '"\(.at[0]),\(.at[1]) \(.size[0])x\(.size[1])"')" "$file_path"
+        ;;
+    *)
+        echo "usage: screenshot [region|full|window]" >&2
+        exit 1
+        ;;
+esac
+
+if [ ! -s "$file_path" ]; then
+    notify-send -a "Screenshot" "󰗟 Failed" "No image was captured" -u critical
+    exit 1
+fi
+
+wl-copy < "$file_path"
+notify-send -a "Screenshot" "󰻛 Saved" "$file_name" -u low \
+    --hint "string:image-path:$file_path"

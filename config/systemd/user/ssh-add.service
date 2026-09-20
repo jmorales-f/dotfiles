@@ -1,0 +1,12 @@
+[Unit]
+Description=Add SSH Keys to Agent
+After=ssh-agent.service
+
+[Service]
+Type=oneshot
+ExecStartPre=/bin/sleep 1
+Environment=SSH_AUTH_SOCK=%t/ssh-agent.socket
+ExecStart=/usr/bin/ssh-add /home/betrayed/.ssh/github
+
+[Install]
+WantedBy=default.target

@@ -1,0 +1,18 @@
+configuration {
+    modi: "drun,run,window";
+    show-icons: true;
+    icon-theme: "Arc";
+    font: "FiraCode Nerd Font 10";
+    drun-display-format: "{name}";
+    disable-history: false;
+    location: 0;
+    sidebar-mode: false;
+    scroll-method: 0;
+    kb-mode-next: "Alt+Tab";
+    kb-mode-previous: "Alt+Shift+Tab";
+    kb-accept-entry: "Return,KP_Enter";
+    kb-custom-3: "Escape";
+    kb-cancel: "";
+}
+
+@theme "theme.rasi"

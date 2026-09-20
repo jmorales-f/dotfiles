@@ -1,0 +1,23 @@
+* {
+	font-family: "FiraCode Nerd Font Propo";
+	font-size: 12px;
+}
+
+#workspaces button.active label,
+#workspaces button.focused label ,
+#custom-left,
+#custom-left.inverse,
+#custom-right,
+#custom-right.inverse,
+#custom-left.inverse-accent,
+#custom-right.inverse-accent {
+	font-size: 16px;
+}
+
+#custom-power {
+	font-size: 15px;
+}
+
+#custom-user {
+  font-size: 14px;
+}
