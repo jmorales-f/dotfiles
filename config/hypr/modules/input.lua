@@ -2,9 +2,8 @@
 -- See https://wiki.hypr.land/Configuring/Basics/Variables/
 hl.config({
     input = {
-        kb_layout = "latam",
-        -- kb_layout = "us",
-        -- kb_variant = "intl",
+        kb_layout = "us",
+        kb_variant = "altgr-intl",
         kb_options = "caps:escape",
 
         follow_mouse = 1,

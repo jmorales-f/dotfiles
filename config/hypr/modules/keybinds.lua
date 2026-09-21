@@ -28,6 +28,7 @@ local b_shot_window = shift .. " + Print"    -- SHIFT + Print
 
 -- Scratchpads
 local b_wallpaper  = mainMod .. " + " .. shift .. " + W" -- SUPER + SHIFT + W
+local b_principia_workspace = mainMod .. " + " .. shift .. " + P" -- SUPER + SHIFT +P
 local b_opencode   = mainMod .. " + O"                   -- SUPER + O
 local b_lazydocker = mainMod .. " + D"                   -- SUPER + D
 local b_btop       = mainMod .. " + P"                   -- SUPER + P
@@ -90,6 +91,9 @@ hl.bind(b_shot_window, hl.dsp.exec_cmd("~/.config/scripts/screenshot window"))
 
 -- Wallpaper picker in a scratchpad
 hl.bind(b_wallpaper, hl.dsp.exec_cmd("~/.config/scripts/scratch wall \"kitty -e ~/.config/scripts/wallpaper_picker\""))
+
+-- Principia VSCode workspace in a scratchpad
+hl.bind(b_principia_workspace, hl.dsp.exec_cmd("~/.config/scripts/principia-workspace"))
 
 -- opencode in a scratchpad
 hl.bind(b_opencode, hl.dsp.exec_cmd("~/.config/scripts/scratch oc \"kitty -e opencode\""))
