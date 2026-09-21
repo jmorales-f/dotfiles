@@ -77,7 +77,7 @@ local b_prev      = "XF86AudioPrev"         -- XF86AudioPrev
 
 hl.bind(b_terminal, hl.dsp.exec_cmd(settings.terminal))
 hl.bind(b_browser, hl.dsp.exec_cmd(settings.browser))
-hl.bind(b_kill, hl.dsp.window.kill())
+hl.bind(b_kill, hl.dsp.window.close())
 hl.bind(b_file, hl.dsp.exec_cmd(settings.fileManager))
 hl.bind(b_launcher, hl.dsp.exec_cmd("rofi -show menu -modes \"menu:$HOME/.config/menu/main\""))
 hl.bind(b_exit, hl.dsp.exit())
@@ -92,8 +92,43 @@ hl.bind(b_shot_window, hl.dsp.exec_cmd("~/.config/scripts/screenshot window"))
 -- Wallpaper picker in a scratchpad
 hl.bind(b_wallpaper, hl.dsp.exec_cmd("~/.config/scripts/scratch wall \"kitty -e ~/.config/scripts/wallpaper_picker\""))
 
--- Principia VSCode workspace in a scratchpad
-hl.bind(b_principia_workspace, hl.dsp.exec_cmd("~/.config/scripts/principia-workspace"))
+-- Principia VSCode workspace in a scratchpad.
+-- Two windows are involved, spawned a moment apart, both needing to land in
+-- special:pws without ever flashing on a visible workspace:
+--   1. the kitty wrapper itself -- tagged via the exec_cmd workspace option,
+--      same as the other scratchpads (otherwise the "kitty-workspace" rule
+--      below would pull it onto workspace 2 and switch view there).
+--   2. the actual VS Code window -- code's CLI just messages an
+--      already-running instance over IPC, so it's never a child of the
+--      process we spawn, and its title isn't set to the real workspace name
+--      until just after it's mapped, ruling out exec-time assignment and
+--      title-matched window rules alike. Instead: arm a flag right before
+--      launching, and catch the window on open_early (fired before it's
+--      ever painted) to redirect it into the scratchpad directly.
+local principia_pending = false
+hl.on("window.open_early", function(window)
+    if principia_pending and window.class == "code-oss" then
+        principia_pending = false
+        hl.dispatch(hl.dsp.window.move({
+            workspace = "special:pws",
+            window = "address:" .. window.address,
+            silent = true,
+        }))
+    end
+end)
+
+hl.bind(b_principia_workspace, function()
+    if #hl.get_windows({ workspace = "special:pws" }) > 0 then
+        hl.dispatch(hl.dsp.workspace.toggle_special("pws"))
+        return
+    end
+    principia_pending = true
+    hl.timer(function() principia_pending = false end, { timeout = 5000, type = "oneshot" })
+    hl.dispatch(hl.dsp.exec_cmd(
+        "kitty -e code --new-window ~/dev/principia-workspace/principia.code-workspace",
+        { workspace = "special:pws" }
+    ))
+end)
 
 -- opencode in a scratchpad
 hl.bind(b_opencode, hl.dsp.exec_cmd("~/.config/scripts/scratch oc \"kitty -e opencode\""))
